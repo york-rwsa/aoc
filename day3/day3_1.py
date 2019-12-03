@@ -1,5 +1,3 @@
-from itertools import product
-
 with open("day3_input.txt", "r") as f:
   inputs = f.read().split('\n')
 
@@ -52,12 +50,20 @@ def genlines(instructions):
 
   return lines
 
-lines = [genlines(i.split(',')) for i in inputs]
-distances = []
-for pair in product(lines[0], lines[1]):
-  itersects = pair[0].intersections(pair[1])
-  
-  for i in itersects:
-    distances.append(abs(i[0]) + abs(i[1]))
-  
+points = set()
+for l in genlines(inputs[0].split(',')):
+  points.update(l.points())
+
+x = 0
+y = 0
+intersections = set()
+for instruction in inputs[1].split(','):
+  line = Line(x, y, instruction[0], int(instruction[1:]))
+  x = line.get_x2()
+  y = line.get_y2()
+
+  intersects = points.intersection(line.points())
+  intersections.update(intersects)
+
+distances = [abs(i[0]) + abs(i[1]) for i in intersections]
 print(min(distances))
