@@ -4,52 +4,54 @@ class Computer():
   ic = 0
   input_counter = 0
   inputs = []
+  debug = False
 
-  def __init__(self, mem, inputs=[]):
+  def __init__(self, mem, inputs=[], debug=False):
+    self.debug = debug
     self.mem = mem
     self.inputs = inputs
     self.opcodes = {
       "01": {
-        "name": "Add",
+        "name": "add",
         "op": self._add,
-        "n_operands": 3
+        "width": 3
       },
       "02": {
-        "name": "Mul",
+        "name": "mul",
         "op": self._mul,
-        "n_operands": 3
+        "width": 3
       },
       "03": {
-        "name": "Input", 
+        "name": "in", 
         "op": self._input,
-        "n_operands": 1
+        "width": 1
       },
       "04": {
-        "name": "Output", 
+        "name": "out", 
         "op": self._output,
-        "n_operands": 1
+        "width": 1
       },
       "05": {
-        "name": "jump-if-true", 
+        "name": "jnz", 
         "op": self._jump_true,
-        "n_operands": 2,
+        "width": 2,
         "no_inc": True
       },
       "06": {
-        "name": "jump-if-false", 
+        "name": "jz", 
         "op": self._jump_false,
-        "n_operands": 2,
+        "width": 2,
         "no_inc": True
       },
       "07": {
-        "name": "Less Than",
+        "name": "lt",
         "op": self._less_than,
-        "n_operands": 3
+        "width": 3
       },
       "08": {
-        "name": "Equals",
+        "name": "eq",
         "op": self._equals,
-        "n_operands": 3
+        "width": 3
       }
     }
 
@@ -58,21 +60,43 @@ class Computer():
       try:
         self._do_instruction()
       except:
-        print(f"{self.ic=}, {self.mem[self.ic]}")
+        print(f"IC: {self.ic}, MEM: {self.mem[self.ic]}")
         raise
 
   def _do_instruction(self):
     opcode = str(self.mem[self.ic]).zfill(2)
     instruction = self.opcodes[opcode[-2:]]
-    modes = opcode[:-2].zfill(instruction["n_operands"])[::-1]
-    
-    instruction["op"](self._get_operands(modes), self.mem, self.ic)
+    modes = opcode[:-2].zfill(instruction["width"])[::-1]
+    operands = self._get_operands(modes)
+
+    if self.debug:
+      self._debug(instruction, modes, operands)
+
+    instruction["op"](operands, self.mem, self.ic)
 
     if not instruction.get("no_inc", False):
       self.ic += len(modes) + 1
 
-  def _inc_ic(self, width):
-    self.ic += width
+  def _debug(self, instruction, modes, operands):
+    digits = len(str(len(self.mem)))
+    max_operands = 3
+    fstring = "{:0{digits}}: {:05} {:4} ".format(self.ic, self.mem[self.ic], instruction['name'], digits=digits)
+    for i in range(max_operands):
+      if i < len(operands):
+        x = "{}"
+        if modes[i] == "0":
+          x = "[{}]"
+        
+        fstring += "{:>6}{}".format(x.format(self.mem[self.ic + i + 1]), (', ' if i < len(operands) - 1 else ''))
+      else:
+        fstring += "".rjust(8, ' ')
+    
+    fstring += ' ; '
+
+    for i, op in enumerate(operands):
+      fstring += "{:>8}{}".format(op, ', ' if i < len(operands) - 1 else '')
+      
+    print(fstring)
 
   def _get_operands(self, modes):
     operands = []
