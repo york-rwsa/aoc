@@ -38,7 +38,10 @@ class Arcade:
           self.c.inputs.append(i)
         elif not ret:
           running = False
+          break
 
+      if running == False:
+        break
       tile = self.c.outputs.pop()
       y = self.c.outputs.pop()
       x = self.c.outputs.pop()
